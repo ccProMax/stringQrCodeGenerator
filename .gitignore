@@ -1,0 +1,11 @@
+*.7z
+*.json
+*.git
+*.spec
+**/noupdate/
+cookie.txt
+cookiebak.txt
+# 排除已经生成的构建/打包文件
+**/dist/
+**/build/
+**/__pycache__/
