@@ -9,14 +9,14 @@ class WinGUI(Tk):
         self.__win()
         self.tk_prompt = self.__tk_prompt(self)
         self.tk_input_input = self.__tk_input_input(self)
-        self.tk_button_generate = self.__tk_button_generate(self)
-        self.isgetdata = False
+        self.tk_qrCode = self.__tk_qrCode(self)
+        self.last_content = self.tk_input_input.get(1.0, END).rstrip("\n")
 
     def __win(self):
         self.title("字符串二维码生成器")
         # 设置窗口大小、居中
-        width = 645
-        height = 562
+        width = 820
+        height = 450
         screenwidth = self.winfo_screenwidth()
         screenheight = self.winfo_screenheight()
         geometry = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
@@ -74,13 +74,13 @@ class WinGUI(Tk):
         return label
     def __tk_input_input(self, parent):
         ipt = Text(parent, undo=True, autoseparators=True, maxundo=-1)
-        ipt.place(x=24, y=33, width=600, height=450)
+        ipt.place(x=24, y=33, width=380, height=380)
         return ipt
 
-    def __tk_button_generate(self, parent):
-        btn = Button(parent, text="生成二维码", takefocus=False,)
-        btn.place(x=245, y=500, width=150, height=40)
-        return btn
+    def __tk_qrCode(self, parent):
+        qr_code = Label(parent)
+        qr_code.place(x=420, y=33, width=380, height=380)
+        return qr_code
 
 
 class Win(WinGUI):
@@ -92,20 +92,22 @@ class Win(WinGUI):
         self.ctl.init(self)
 
     def __event_bind(self):
-        self.tk_button_generate.bind('<Button-1>', self.__start_thread)
+        self.tk_input_input.bind('<<Modified>>', self.__start_monitoring)
         pass
 
     def __style_config(self):
         pass
 
-    def __start_thread(self, event):
-        if self.isgetdata:   # 上一个没有关闭
-            return
-        self.isgetdata = True
-        self.tk_button_generate.config(state=DISABLED, text="已生成二维码")
-        thread = threading.Thread(target=self.ctl.generate_qrCode)
-        thread.start()
-
+    def __start_monitoring(self, event = None):
+        current_content = self.tk_input_input.get(1.0, END).rstrip("\n")
+        byte_length = len(current_content.encode('utf-8'))
+        if byte_length > 2048:
+            self.tk_qrCode.config(text="字符串太长了")
+            self.tk_qrCode.config(image="")
+        elif current_content != self.last_content:  # 比较内容是否变化
+            self.ctl.generate_qrCode(current_content)
+            self.last_content = current_content  # 更新最后内容
+        self.after(100, self.__start_monitoring)  # 每100毫秒检查一次
 
 if __name__ == "__main__":
     win = WinGUI()
