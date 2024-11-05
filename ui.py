@@ -1,9 +1,9 @@
 from tkinter import *
 from tkinter.ttk import *
-import threading
+from tkinterdnd2 import DND_FILES, TkinterDnD
 
 
-class WinGUI(Tk):
+class WinGUI(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
         self.__win()
@@ -68,10 +68,12 @@ class WinGUI(Tk):
             hbar = Scrollbar(master, orient="horizontal")
             self.h_scrollbar(hbar, widget, x, y, w, h, pw, ph)
         self.scrollbar_autohide(vbar, hbar, widget)
+
     def __tk_prompt(self, parent):
         label = Label(parent, text="输入字符串: ", anchor="center", )
         label.place(x=15, y=15, width=90, height=20)
         return label
+
     def __tk_input_input(self, parent):
         ipt = Text(parent, undo=True, autoseparators=True, maxundo=-1)
         ipt.place(x=24, y=33, width=380, height=380)
@@ -92,13 +94,15 @@ class Win(WinGUI):
         self.ctl.init(self)
 
     def __event_bind(self):
+        self.tk_input_input.drop_target_register(DND_FILES)
+        self.tk_input_input.dnd_bind('<<Drop>>', self.__handle_drop)
         self.tk_input_input.bind('<<Modified>>', self.__start_monitoring)
         pass
 
     def __style_config(self):
         pass
 
-    def __start_monitoring(self, event = None):
+    def __start_monitoring(self, event=None):
         current_content = self.tk_input_input.get(1.0, END).rstrip("\n")
         byte_length = len(current_content.encode('utf-8'))
         if byte_length > 2048:
@@ -108,6 +112,12 @@ class Win(WinGUI):
             self.ctl.generate_qrCode(current_content)
             self.last_content = current_content  # 更新最后内容
         self.after(100, self.__start_monitoring)  # 每100毫秒检查一次
+
+    def __handle_drop(self, event):
+        file_path = event.data.strip('{}')
+        self.tk_input_input.delete(1.0, END)
+        self.tk_input_input.insert(END, file_path)
+
 
 if __name__ == "__main__":
     win = WinGUI()
